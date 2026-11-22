@@ -18,11 +18,9 @@ jobs:
           unzip -o "*.zip" -d extracted
           PROJECT_DIR=$(find extracted -name "settings.gradle*" -exec dirname {} \; | head -n 1)
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-          find "$PROJECT_DIR" -name "build.gradle.kts" | while read f; do
-            sed -i 's/jvmTarget = "1.8"/jvmTarget = "17"/g; s/JavaVersion.VERSION_1_8/JavaVersion.VERSION_17/g' "$f"
-            if grep -q "kotlin(" "$f" || grep -q "com.android.application" "$f"; then
-              printf '\nandroid {\n  compileOptions {\n    sourceCompatibility = JavaVersion.VERSION_17\n    targetCompatibility = JavaVersion.VERSION_17\n  }\n  kotlinOptions {\n    jvmTarget = "17"\n  }\n}\n' >> "$f"
-            fi
+          find "$PROJECT_DIR" \( -name "build.gradle" -o -name "build.gradle.kts" \) -exec sed -i -E 's/1\.8/17/g; s/VERSION_1_8/VERSION_17/g; s/jvmTarget\s*=\s*["\x27][^"\x27]*["\x27]/jvmTarget = "17"/g' {} +
+          find "$PROJECT_DIR" -name "gradle.properties" | while read gp; do
+            echo "kotlin.jvm.target.validation.mode=warning" >> "$gp"
           done
 
       - name: Set up JDK 17
@@ -38,10 +36,11 @@ jobs:
 
       - name: Build Debug APK
         working-directory: ${{ env.PROJECT_DIR }}
-        run: gradle assembleDebug
+        run: gradle assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SW-Auto-Assistant-APK
           path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
+          
