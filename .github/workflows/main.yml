@@ -18,6 +18,8 @@ jobs:
           unzip -o "*.zip" -d extracted
           PROJECT_DIR=$(find extracted -name "settings.gradle*" -exec dirname {} \; | head -n 1)
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+          find "$PROJECT_DIR" -name "build.gradle.kts" -exec sed -i 's/jvmTarget = "1.8"/jvmTarget = "17"/g; s/JavaVersion.VERSION_1_8/JavaVersion.VERSION_17/g' {} +
+          find "$PROJECT_DIR" -name "build.gradle" -exec sed -i "s/jvmTarget = '1.8'/jvmTarget = '17'/g; s/JavaVersion.VERSION_1_8/JavaVersion.VERSION_17/g" {} +
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
